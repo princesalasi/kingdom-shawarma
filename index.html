@@ -4,6 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Shawarma Sales" />
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgo=" />
   <title>Shawarma Sales Calculator</title>
   <style>
     body {
@@ -14,26 +18,22 @@
       color: #333;
       font-size: 14px;
     }
-
     h1, h2 {
       text-align: center;
       font-size: 18px;
       margin: 8px 0;
     }
-
     label {
       display: block;
       margin-top: 6px;
     }
-
-    input {
+    input, select {
       width: 100%;
       padding: 6px;
-      margin-top: 2px;
       font-size: 16px;
       box-sizing: border-box;
+      margin-top: 2px;
     }
-
     button {
       margin-top: 12px;
       padding: 10px;
@@ -45,7 +45,6 @@
       cursor: pointer;
       border-radius: 4px;
     }
-
     .results {
       margin-top: 12px;
       background: #fff3e0;
@@ -53,12 +52,10 @@
       border-radius: 5px;
       font-size: 14px;
     }
-
     .error {
       color: red;
       font-weight: bold;
     }
-
     @media (min-width: 600px) {
       body {
         max-width: 500px;
@@ -72,9 +69,8 @@
   <h1>Shawarma Sales Calculator</h1>
   <h2>Input Stock</h2>
 
-  
   <label for="location"><strong>Select Location:</strong></label>
-  <select id="location" style="width: 100%; padding: 6px; font-size: 16px; margin-bottom: 10px;">
+  <select id="location">
     <option value="None" selected>None</option>
     <option value="Abrepo">Abrepo</option>
     <option value="Bohyen">Bohyen</option>
@@ -82,7 +78,6 @@
   </select>
 
   <label>Initial Eggs:</label>
-    
   <input type="number" id="eggsStart" />
   <label>Remaining Eggs:</label>
   <input type="number" id="eggsEnd" />
@@ -107,86 +102,23 @@
   <div class="results" id="results"></div>
 
   <script>
-    function calculateSales() {
-      const eggsUsed = parseInt(document.getElementById('eggsStart').value) - parseInt(document.getElementById('eggsEnd').value);
-      const sausagesUsed = parseInt(document.getElementById('sausagesStart').value) - parseInt(document.getElementById('sausagesEnd').value);
-      const drinksUsed = parseInt(document.getElementById('drinksStart').value) - parseInt(document.getElementById('drinksEnd').value);
-      const breadsUsed = parseInt(document.getElementById('breadsStart').value) - parseInt(document.getElementById('breadsEnd').value);
-
-      if ([eggsUsed, sausagesUsed, drinksUsed, breadsUsed].some(v => v < 0)) {
-        document.getElementById('results').innerHTML = '<p class="error">Error: Remaining stock cannot be greater than initial stock.</p>';
-        return;
-      }
-
-      let max50 = Math.min(
-        Math.floor(sausagesUsed / 2),
-        eggsUsed,
-        drinksUsed,
-        breadsUsed
-      );
-
-      const remainingEggs = eggsUsed - max50;
-      const remainingBreads = breadsUsed - max50;
-      let max40 = Math.min(remainingEggs, remainingBreads);
-      const totalSales = max50 * 50 + max40 * 40;
-      const totalShawarmas = max50 + max40;
-
-      let errors = [];
-
-      if (sausagesUsed !== max50 * 2) {
-        errors.push("Sausages used should be twice the number of ₵50 shawarmas sold.");
-      }
-      if (drinksUsed !== max50) {
-        errors.push("Drinks used should equal ₵50 shawarmas sold.");
-      }
-      if (breadsUsed !== totalShawarmas) {
-        errors.push("Bread used should equal total shawarmas sold (₵50 + ₵40).");
-      }
-      if (eggsUsed !== totalShawarmas) {
-        errors.push("Eggs used should equal total shawarmas sold (₵50 + ₵40).");
-      }
-      if (eggsUsed < drinksUsed) {
-        errors.push("More drinks used than eggs. Check input.");
-      }
-
-      if (totalShawarmas > 0 && (eggsUsed === 0 || breadsUsed === 0)) {
-        errors.push("Anomaly: Shawarmas sold but key ingredients show zero usage.");
-      }
-
-      if (totalShawarmas === 0 && (eggsUsed > 0 || sausagesUsed > 0 || drinksUsed > 0 || breadsUsed > 0)) {
-        errors.push("Anomaly: Ingredients used but no shawarma sold.");
-      }
-
-      let resultHTML = `
-        <strong>Sales Summary:</strong><br>
-        ₵50 Shawarmas: <strong>${max50}</strong><br>
-        ₵40 Shawarmas: <strong>${max40}</strong><br>
-        <strong>Total Sales: ₵${totalSales}</strong><br>
-        <br><strong>Used:</strong><br>
-        Eggs: ${eggsUsed}, Sausages: ${sausagesUsed}, Drinks: ${drinksUsed}, Bread: ${breadsUsed}
-      `;
-
-      if (errors.length > 0) {
-        resultHTML += `<div class="error"><br>⚠ Issues Detected:<br>${errors.map(e => '- ' + e).join('<br>')}</div>`;
-      }
-
-      document.getElementById('results').innerHTML = resultHTML;
-    }
-  
     function saveReport(location, content) {
       const now = new Date();
       const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
       const filename = location + '_' + timestamp + '.txt';
       const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.download = filename;
-      link.href = window.URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
 
     function calculateSales() {
       const location = document.getElementById('location').value;
-
       const eggsUsed = parseInt(document.getElementById('eggsStart').value) - parseInt(document.getElementById('eggsEnd').value);
       const sausagesUsed = parseInt(document.getElementById('sausagesStart').value) - parseInt(document.getElementById('sausagesEnd').value);
       const drinksUsed = parseInt(document.getElementById('drinksStart').value) - parseInt(document.getElementById('drinksEnd').value);
@@ -197,13 +129,7 @@
         return;
       }
 
-      let max50 = Math.min(
-        Math.floor(sausagesUsed / 2),
-        eggsUsed,
-        drinksUsed,
-        breadsUsed
-      );
-
+      let max50 = Math.min(Math.floor(sausagesUsed / 2), eggsUsed, drinksUsed, breadsUsed);
       const remainingEggs = eggsUsed - max50;
       const remainingBreads = breadsUsed - max50;
       let max40 = Math.min(remainingEggs, remainingBreads);
@@ -212,29 +138,13 @@
 
       let errors = [];
 
-      if (sausagesUsed !== max50 * 2) {
-        errors.push("Sausages used should be twice the number of ₵50 shawarmas sold.");
-      }
-      if (drinksUsed !== max50) {
-        errors.push("Drinks used should equal ₵50 shawarmas sold.");
-      }
-      if (breadsUsed !== totalShawarmas) {
-        errors.push("Bread used should equal total shawarmas sold (₵50 + ₵40).");
-      }
-      if (eggsUsed !== totalShawarmas) {
-        errors.push("Eggs used should equal total shawarmas sold (₵50 + ₵40).");
-      }
-      if (eggsUsed < drinksUsed) {
-        errors.push("More drinks used than eggs. Check input.");
-      }
-
-      if (totalShawarmas > 0 && (eggsUsed === 0 || breadsUsed === 0)) {
-        errors.push("Anomaly: Shawarmas sold but key ingredients show zero usage.");
-      }
-
-      if (totalShawarmas === 0 && (eggsUsed > 0 || sausagesUsed > 0 || drinksUsed > 0 || breadsUsed > 0)) {
-        errors.push("Anomaly: Ingredients used but no shawarma sold.");
-      }
+      if (sausagesUsed !== max50 * 2) errors.push("Sausages used should be twice the number of ₵50 shawarmas sold.");
+      if (drinksUsed !== max50) errors.push("Drinks used should equal ₵50 shawarmas sold.");
+      if (breadsUsed !== totalShawarmas) errors.push("Bread used should equal total shawarmas sold (₵50 + ₵40).");
+      if (eggsUsed !== totalShawarmas) errors.push("Eggs used should equal total shawarmas sold (₵50 + ₵40).");
+      if (eggsUsed < drinksUsed) errors.push("More drinks used than eggs. Check input.");
+      if (totalShawarmas > 0 && (eggsUsed === 0 || breadsUsed === 0)) errors.push("Anomaly: Shawarmas sold but key ingredients show zero usage.");
+      if (totalShawarmas === 0 && (eggsUsed > 0 || sausagesUsed > 0 || drinksUsed > 0 || breadsUsed > 0)) errors.push("Anomaly: Ingredients used but no shawarma sold.");
 
       let resultHTML = `
         <strong>Sales Summary:</strong><br>
@@ -273,7 +183,6 @@ ${errors.length > 0 ? 'Issues Detected:\n' + errors.join('\n') : 'No issues dete
         saveReport(location, report);
       }
     }
-    </script>
-
+  </script>
 </body>
 </html>
