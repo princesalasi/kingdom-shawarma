@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Shawarma Sales" />
-  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgo=" />
-  <title>Shawarma Sales Calculator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <title>Shawarma Kingdom – Sales Calculator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -66,7 +66,7 @@
 </head>
 <body>
 
-  <h1>Shawarma Sales Calculator</h1>
+  <h1>Shawarma Kingdom</h1><h2>Daily Sales Calculator</h2>
   <h2>Input Stock</h2>
 
   <label for="location"><strong>Select Location:</strong></label>
@@ -102,19 +102,19 @@
   <div class="results" id="results" style="color: black;"></div>
 
   <script>
-    function saveReport(location, content) {
+    async function saveReport(location, content, max50, max40, totalSales, eggsUsed, sausagesUsed, drinksUsed, breadsUsed, errors) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
       const now = new Date();
       const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
-      const filename = location + '_' + timestamp + '.txt';
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const filename = location + '_' + timestamp + '.pdf';
+
+      const lines = content.split('\n');
+      lines.forEach((line, index) => {
+        doc.text(line, 10, 10 + index * 7);
+      });
+
+      doc.save(filename);
     }
 
     function calculateSales() {
@@ -181,9 +181,7 @@ Used Items:
 ${errors.length > 0 ? 'Issues Detected:\n' + errors.join('\n') : 'No issues detected.'}
 `;
 
-      if (location !== 'None') {
-        saveReport(location, report);
-      }
+      if (location !== 'None') { saveReport(location, report, max50, max40, totalSales, eggsUsed, sausagesUsed, drinksUsed, breadsUsed, errors); }
     }
   </script>
 </body>
