@@ -6,8 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Shawarma Sales" />
+  <meta name="apple-mobile-web-app-title" content="Shawarma Kingdom" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <title>Shawarma Kingdom – Sales Calculator</title>
   <style>
     body {
@@ -66,8 +67,8 @@
 </head>
 <body>
 
-  <h1>Shawarma Kingdom</h1><h2>Daily Sales Calculator</h2>
-  <h2>Input Stock</h2>
+  <h1>Shawarma Kingdom</h1>
+  <h2>Daily Sales Calculator</h2>
 
   <label for="location"><strong>Select Location:</strong></label>
   <select id="location">
@@ -102,17 +103,48 @@
   <div class="results" id="results" style="color: black;"></div>
 
   <script>
-    async function saveReport(location, content, max50, max40, totalSales, eggsUsed, sausagesUsed, drinksUsed, breadsUsed, errors) {
+    async function saveReport(location, max50, max40, totalSales, eggsUsed, sausagesUsed, drinksUsed, breadsUsed, errors) {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const now = new Date();
       const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
       const filename = location + '_' + timestamp + '.pdf';
 
-      const lines = content.split('\n');
-      lines.forEach((line, index) => {
-        doc.text(line, 10, 10 + index * 7);
+      doc.setFontSize(14);
+      doc.text("SHAWARMA KINGDOM – DAILY SALES REPORT", 105, 15, { align: 'center' });
+      doc.setFontSize(11);
+      doc.text("Location: " + location, 14, 25);
+      doc.text("Date: " + new Date().toLocaleString(), 14, 32);
+
+      doc.autoTable({
+        startY: 40,
+        head: [['Type', 'Quantity', 'Unit Price', 'Total']],
+        body: [
+          ['₵50 Shawarma', max50.toString(), '₵50', '₵' + (max50 * 50)],
+          ['₵40 Shawarma', max40.toString(), '₵40', '₵' + (max40 * 40)],
+          ['TOTAL', '', '', '₵' + totalSales]
+        ]
       });
+
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 8,
+        head: [['Ingredient', 'Used']],
+        body: [
+          ['Eggs', eggsUsed.toString()],
+          ['Sausages', sausagesUsed.toString()],
+          ['Drinks', drinksUsed.toString()],
+          ['Bread', breadsUsed.toString()]
+        ]
+      });
+
+      if (errors.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(200, 0, 0);
+        doc.text("⚠ Issues Detected:", 14, doc.lastAutoTable.finalY + 10);
+        errors.forEach((err, i) => {
+          doc.text(`• ${err}`, 18, doc.lastAutoTable.finalY + 18 + (i * 7));
+        });
+      }
 
       doc.save(filename);
     }
@@ -164,24 +196,9 @@
       resultBox.innerHTML = resultHTML;
       resultBox.style.color = errors.length > 0 ? 'red' : 'green';
 
-      const report = `SHAWARMA DAILY SALES REPORT
-Location: ${location}
-Date: ${new Date().toLocaleString()}
-
-₵50 Shawarmas Sold: ${max50}
-₵40 Shawarmas Sold: ${max40}
-Total Sales: ₵${totalSales}
-
-Used Items:
-- Eggs: ${eggsUsed}
-- Sausages: ${sausagesUsed}
-- Drinks: ${drinksUsed}
-- Bread: ${breadsUsed}
-
-${errors.length > 0 ? 'Issues Detected:\n' + errors.join('\n') : 'No issues detected.'}
-`;
-
-      if (location !== 'None') { saveReport(location, report, max50, max40, totalSales, eggsUsed, sausagesUsed, drinksUsed, breadsUsed, errors); }
+      if (location !== 'None') {
+        saveReport(location, max50, max40, totalSales, eggsUsed, sausagesUsed, drinksUsed, breadsUsed, errors);
+      }
     }
   </script>
 </body>
