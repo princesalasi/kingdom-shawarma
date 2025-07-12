@@ -99,7 +99,7 @@
 
   <button onclick="calculateSales()">Calculate Sales</button>
 
-  <div class="results" id="results"></div>
+  <div class="results" id="results" style="color: black;"></div>
 
   <script>
     function saveReport(location, content) {
@@ -160,7 +160,9 @@
         resultHTML += `<div class="error"><br>⚠ Issues Detected:<br>${errors.map(e => '- ' + e).join('<br>')}</div>`;
       }
 
-      document.getElementById('results').innerHTML = resultHTML;
+      const resultBox = document.getElementById('results');
+      resultBox.innerHTML = resultHTML;
+      resultBox.style.color = errors.length > 0 ? 'red' : 'green';
 
       const report = `SHAWARMA DAILY SALES REPORT
 Location: ${location}
