@@ -4,9 +4,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Shawarma Kingdom" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <title>Shawarma Kingdom – Sales Calculator</title>
@@ -70,7 +67,10 @@
   <h1>Shawarma Kingdom</h1>
   <h2>Daily Sales Calculator</h2>
 
-  <label for="location"><strong>Select Location:</strong></label>
+  
+    <label><input type="checkbox" id="useEggs" /> Include Eggs in Calculation</label>
+    <label for="location"><strong>Select Location:</strong></label>
+    
   <select id="location">
     <option value="None" selected>None</option>
     <option value="Abrepo">Abrepo</option>
@@ -122,7 +122,7 @@
         body: [
           ['₵50 Shawarma', max50.toString(), '₵50', '₵' + (max50 * 50)],
           ['₵40 Shawarma', max40.toString(), '₵40', '₵' + (max40 * 40)],
-          ['TOTAL', '', '', '₵' + totalSales]
+          ['TOTAL', '', '', '₵' + (max50 * 50 + max40 * 40)]
         ]
       });
 
@@ -161,22 +161,27 @@
         return;
       }
 
-      let max50 = Math.min(Math.floor(sausagesUsed / 2), eggsUsed, drinksUsed, breadsUsed);
-      const remainingEggs = eggsUsed - max50;
+      
+    const useEggs = document.getElementById("useEggs").checked;
+    const max50 = drinksUsed;
+    
+      const remainingSausages = sausagesUsed - max50 * 2;
       const remainingBreads = breadsUsed - max50;
-      let max40 = Math.min(remainingEggs, remainingBreads);
+      
+    const max40 = useEggs
+      ? Math.min(remainingSausages, remainingBreads, eggsUsed - max50)
+      : Math.min(remainingSausages, remainingBreads);
+    
       const totalSales = max50 * 50 + max40 * 40;
-      const totalShawarmas = max50 + max40;
 
       let errors = [];
-
-      if (sausagesUsed !== max50 * 2) errors.push("Sausages used should be twice the number of ₵50 shawarmas sold.");
-      if (drinksUsed !== max50) errors.push("Drinks used should equal ₵50 shawarmas sold.");
-      if (breadsUsed !== totalShawarmas) errors.push("Bread used should equal total shawarmas sold (₵50 + ₵40).");
-      if (eggsUsed !== totalShawarmas) errors.push("Eggs used should equal total shawarmas sold (₵50 + ₵40).");
-      if (eggsUsed < drinksUsed) errors.push("More drinks used than eggs. Check input.");
-      if (totalShawarmas > 0 && (eggsUsed === 0 || breadsUsed === 0)) errors.push("Anomaly: Shawarmas sold but key ingredients show zero usage.");
-      if (totalShawarmas === 0 && (eggsUsed > 0 || sausagesUsed > 0 || drinksUsed > 0 || breadsUsed > 0)) errors.push("Anomaly: Ingredients used but no shawarma sold.");
+      
+    if (sausagesUsed !== (max50 * 2 + max40)) errors.push(`Sausages used mismatch. Expected: ${max50 * 2 + max40}, Recorded: ${sausagesUsed}`);
+    if (useEggs && eggsUsed !== (max50 + max40)) errors.push(`Eggs used mismatch. Expected: ${max50 + max40}, Recorded: ${eggsUsed}`);
+    
+      if (breadsUsed !== (max50 + max40)) errors.push(`Bread used mismatch. Expected: ${max50 + max40}, Recorded: ${breadsUsed}`);
+      if (drinksUsed !== max50) errors.push(`Drinks used mismatch. Expected: ${max50}, Recorded: ${drinksUsed}`);
+      if ((max50 + max40) > 0 && breadsUsed === 0) errors.push("Anomaly: shawarma sold but bread used = 0.");
 
       let resultHTML = `
         <strong>Sales Summary:</strong><br>
